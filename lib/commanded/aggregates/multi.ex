@@ -1,5 +1,8 @@
 defmodule Commanded.Aggregate.Multi do
   @moduledoc """
+  -------------------------------------------------------------------
+  | MONKEY PATCH OF COMMANDED IMPLEMENTATION TO FIX BUG IN LINE 122 |
+  -------------------------------------------------------------------
   Use `Commanded.Aggregate.Multi` to generate multiple events from a single
   command.
 
@@ -116,7 +119,10 @@ defmodule Commanded.Aggregate.Multi do
             throw(error)
 
           %Multi{} = multi ->
-            Multi.run(multi)
+            # This fix a bug in commanded which do not dispatch previous events to handlers
+            with {aggregate, multi_events} when is_list(multi_events) <- Multi.run(multi) do
+              {aggregate, events ++ multi_events}
+            end
 
           pending_events ->
             pending_events = List.wrap(pending_events)
